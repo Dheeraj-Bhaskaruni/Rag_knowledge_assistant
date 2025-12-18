@@ -9,6 +9,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")
 
 import gradio as gr
 import shutil
+import spaces
 from services.rag.retrieve import get_retriever
 from services.rag.rerank import get_reranker
 from services.rag.generate import get_generator
