@@ -37,6 +37,12 @@ def init_services():
     except Exception as e:
         print(f"Service init warning: {e}")
 
+# GPU-wrapped generation function
+@spaces.GPU
+def generate_response_gpu(message, history, backend):
+    # This function runs on ZeroGPU
+    return generator.generate(message, "", backend=backend)
+
 @observe(name="chat_interaction")
 def chat_fn(message, history, backend):
     global retriever, reranker, generator
@@ -132,10 +138,6 @@ with gr.Blocks(title="RAG Assistant") as demo:
             chatbot = gr.ChatInterface(
                 fn=chat_fn, 
                 additional_inputs=[backend_radio],
-                examples=[
-                    ["What does the document say?", "openai"], 
-                    ["Summarize the key points.", "openai"]
-                ],
                 title="Ask me anything about your documents"
             )
             
