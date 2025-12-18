@@ -19,30 +19,12 @@ class GeneratorService:
         # Initialize OpenAI if key exists
         self.openai_client = None
         self.openai_model = "gpt-5-nano" # Default
-        env_key = os.getenv("OPENAI_API_KEY")
-        if env_key:
-            self.openai_client = OpenAI(api_key=env_key)
-
-        # Initialize Local Pipeline (Lazy load or load now?)
-        # To avoid slow startup if not used, we can lazy load, 
-        # but user might want to switch instantly.
-        # For now, let's load it ONLY if requested or if openai is missing?
-        # Re-using strict logic: Load structure but pipeline is None
-        self.local_pipeline = None
-
-    def _ensure_local_loaded(self):
-        if self.local_pipeline is None:
-            # Mistral-7B for ZeroGPU (Powerful)
-            # Note: This might be heavy for local machines without strong GPU/RAM.
-            model_id = "mistralai/Mistral-7B-Instruct-v0.3"
-            print(f"Loading local LLM ({model_id})...")
-            from transformers import pipeline
-            self.local_pipeline = pipeline(
-                "text-generation", 
-                model=model_id, 
-                torch_dtype="auto", 
-                device_map="auto"
-            )
+        # Initialize OpenAI if key exists
+        api_key = os.getenv("OPENAI_API_KEY")
+        if api_key:
+            self.openai_client = OpenAI(api_key=api_key)
+        else:
+            print("Warning: OPENAI_API_KEY not found. OpenAI backend will not work.")
 
     def _format_context(self, chunks: List[Dict]) -> str:
         context_str = ""
@@ -58,9 +40,6 @@ class GeneratorService:
         backend: 'openai' or 'local'
         """
         context = self._format_context(context_chunks)
-        
-        # Determine actual backend
-        use_openai = (backend == "openai") and (self.openai_client is not None)
         
         if backend == "openai" and self.openai_client is None:
             return "Error: OpenAI backend selected but OPENAI_API_KEY not found. Please switch to Local or set key."
