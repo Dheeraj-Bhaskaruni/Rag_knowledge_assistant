@@ -264,7 +264,7 @@ threadpoolctl==3.6.0
 tokenizers==0.22.1
     # via transformers
 tomlkit==0.13.3
-torch==2.9.1
+torch==2.4.0
     # via
     #   accelerate
     #   rag-knowledge-assistant
