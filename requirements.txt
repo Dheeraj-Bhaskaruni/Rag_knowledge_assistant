@@ -18,3 +18,5 @@ networkx<3.5
 # Explicitly pinning to avoid Spaces/Gradio conflicts
 gradio==4.44.1
 pydantic>=2.0,<3.0
+sentencepiece
+protobuf
