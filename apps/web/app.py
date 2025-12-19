@@ -167,7 +167,7 @@ with gr.Blocks(title="RAG Knowledge Assistant", theme=gr.themes.Soft()) as demo:
                 gr.HTML("<div style='text-align: center; color: #666; font-size: 11px; margin: 2px 0;'>— OR —</div>")
                 
                 use_sample_chk = gr.Checkbox(
-                    label="Use Sample Dataset", 
+                    label="Use Sports Legends Sample Dataset", 
                     container=False
                 )
                 
@@ -197,7 +197,7 @@ with gr.Blocks(title="RAG Knowledge Assistant", theme=gr.themes.Soft()) as demo:
                     label="LLM Backend",
                     container=False
                 )
-                gr.HTML("<div style='font-size: 9px; color: #888; margin-top: 2px;'>*Local execution using ZeroGPU</div>")
+                gr.HTML("<div style='font-size: 9px; color: #888; margin-top: 2px;'>*Local = Mistral-7B (ZeroGPU)</div>")
 
         # Right Column: Main App (Chat)
         with gr.Column(scale=4):
@@ -205,10 +205,11 @@ with gr.Blocks(title="RAG Knowledge Assistant", theme=gr.themes.Soft()) as demo:
                 fn=chat_fn, 
                 additional_inputs=[backend_radio],
                 title="Chat Interface",
-                description="Ask questions about your uploaded documents.",
+                description="Ask questions about your uploaded documents or the sample dataset.",
                 examples=[
                     ["Who is the greatest quarterback?", "openai"], 
-                    ["Summary of Lionel Messi", "local"]
+                    ["Summarize the uploaded documents", "local"],
+                    ["What makes Lionel Messi a legend?", "gemini"]
                 ]
             )
 
