@@ -93,6 +93,7 @@ class GeneratorService:
             ]
             
             try:
+                # Execute pipeline (already on GPU context from app.py)
                 outputs = _local_pipeline(
                     messages,
                     max_new_tokens=512,
