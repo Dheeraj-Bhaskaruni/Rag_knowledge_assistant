@@ -15,3 +15,6 @@ pandas
 networkx<3.5
 # Add other necessary root deps if missed, but this covers 99% of RAG needs.
 # Allowing pip to resolve versions avoids Py3.10 vs 3.11 conflicts.
+# Explicitly pinning to avoid Spaces/Gradio conflicts
+gradio==4.44.1
+pydantic>=2.0,<3.0

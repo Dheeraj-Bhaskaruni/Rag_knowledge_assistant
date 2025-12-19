@@ -154,4 +154,5 @@ with gr.Blocks(title="RAG Assistant") as demo:
             ingest_btn.click(admin_ingest, inputs=[file_upload], outputs=[status_box])
 
 if __name__ == "__main__":
-    demo.queue().launch()
+    # specific server_name needed for Docker/Spaces
+    demo.queue().launch(server_name="0.0.0.0", ssr_mode=False)
