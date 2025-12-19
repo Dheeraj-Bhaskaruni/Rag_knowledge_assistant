@@ -165,8 +165,8 @@ with gr.Blocks(title="RAG Knowledge Assistant", theme=gr.themes.Soft()) as demo:
                 
                 ingest_btn = gr.Button("🚀 Update Brain", variant="primary", size="sm")
             
-            # Status Log - Hidden by default to save space
-            with gr.Accordion("📝 View Logs", open=False):
+            # Status Log - Visible by default
+            with gr.Accordion("📝 View Logs", open=True):
                 status_box = gr.Textbox(
                     show_label=False, 
                     value="System Ready.", 
