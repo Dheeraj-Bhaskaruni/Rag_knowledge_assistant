@@ -2,6 +2,7 @@ import os
 from typing import List, Dict
 from openai import OpenAI
 from ..observability.langfuse_client import observe
+import torch
 
 SYSTEM_PROMPT = """You are a grounded knowledge assistant. 
 Your goal is to answer the user's question using ONLY the provided context.
@@ -14,12 +15,15 @@ Rules:
 5. Be concise and direct.
 """
 
+# Global variable for lazy loading on the worker node
+_local_pipeline = None
+
 class GeneratorService:
     def __init__(self):
         # Initialize OpenAI if key exists
         self.openai_client = None
-        self.openai_model = "gpt-5-nano" # Default
-        # Initialize OpenAI if key exists
+        self.openai_model = "gpt-4o-mini" # User reported gpt-5 errors, safer default? Or keep logic.
+        
         api_key = os.getenv("OPENAI_API_KEY")
         if api_key:
             self.openai_client = OpenAI(api_key=api_key)
@@ -38,90 +42,72 @@ class GeneratorService:
     def generate(self, query: str, context_chunks: List[Dict], backend: str = "openai") -> str:
         """
         backend: 'openai' or 'local'
+        NOTE: This method must be running in a @spaces.GPU context if backend='local'.
         """
         context = self._format_context(context_chunks)
         
-        if backend == "openai" and self.openai_client is None:
-            return "Error: OpenAI backend selected but OPENAI_API_KEY not found. Please switch to Local or set key."
-
-        if use_openai:
-            # OpenAI Logic
-            input_messages = [
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": f"Context:\n{context}\n\nQuestion: {query}"}
-            ]
+        # Check explicit backend choice
+        if backend == "openai":
+            if self.openai_client is None:
+                 return "Error: OpenAI backend selected but OPENAI_API_KEY not found. Please switch to Local or set key."
             
-            if "gpt-5-" in self.openai_model or "nano" in self.openai_model:
-                 try:
-                     response = self.openai_client.responses.create(
-                        model=self.openai_model,
-                        input=input_messages,
-                        reasoning={"effort": "medium"},
-                        text={"verbosity": "medium"},
-                        max_output_tokens=1000
-                     )
-                     return response.output_text
-                 except Exception as e:
-                     return f"OpenAI Error: {str(e)}"
-            else:
+            # OpenAI Generation
+            try:
+                # Basic Chat Completion
                 response = self.openai_client.chat.completions.create(
                     model=self.openai_model,
-                    messages=input_messages,
-                    temperature=0.1
+                    messages=[
+                        {"role": "system", "content": SYSTEM_PROMPT},
+                        {"role": "user", "content": f"Context:\n{context}\n\nQuestion: {query}"}
+                    ]
                 )
                 return response.choices[0].message.content
+            except Exception as e:
+                return f"OpenAI Error: {str(e)}"
+
         else:
-            # Local Logic (Mistral / ZeroGPU)
-            self._ensure_local_loaded()
+            # Local Generation (Mistral)
+            # This block expects to be running on ZeroGPU (enforced by app.py decorator)
             
-            # Mistral expects standard chat messages usually
+            global _local_pipeline
+            
+            # Lazy Load the model here (on the GPU node)
+            if _local_pipeline is None:
+                print("Loading local Mistral-7B model (Lazy Load)...")
+                try:
+                    from transformers import pipeline
+                    model_id = "mistralai/Mistral-7B-Instruct-v0.3"
+                    _local_pipeline = pipeline(
+                        "text-generation", 
+                        model=model_id, 
+                        torch_dtype=torch.float16, 
+                        device_map="auto" 
+                    )
+                except Exception as e:
+                    return f"Failed to load local model: {e}"
+            
+            # Prepare messages
             messages = [
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": f"Context:\n{context}\n\nQuestion: {query}"}
             ]
             
-            # ZeroGPU / Spaces Handling
-            def run_pipeline(msgs):
-                # Modern pipelines handle list of messages automatically applying chat template
-                outputs = self.local_pipeline(
-                    msgs,
-                    max_new_tokens=512, # Increased for Mistral
+            try:
+                outputs = _local_pipeline(
+                    messages,
+                    max_new_tokens=512,
                     do_sample=True, 
                     temperature=0.1, 
                     top_k=50, 
                     top_p=0.95
                 )
-                # Output is usually a list of dicts. 
-                # For chat pipeline: [{'generated_text': [..., {'role': 'assistant', 'content': '...'}]}] 
-                # OR just string if text-generation vs text-generation-chat?
-                # Default pipeline "text-generation" with list input usually returns: 
-                # [{'generated_text': [{'role': 'user', ...}, {'role': 'assistant', 'content': 'Response'}]}]
-                return outputs[0]['generated_text']
-
-            # Try to decorate with spaces.GPU
-            try:
-                import spaces
-                print("ZeroGPU enabled for this generation.")
-                run_pipeline = spaces.GPU(run_pipeline)
-            except ImportError:
-                pass
+                # Parse output
+                result = outputs[0]['generated_text']
+                if isinstance(result, list):
+                     return result[-1]['content']
+                return str(result)
             except Exception as e:
-                print(f"Could not use ZeroGPU: {e}")
-
-            result = run_pipeline(messages)
-            
-            # Parse result (Transformers pipeline behavior varies by version/call)
-            # If result is a string (rare for chat list input), return it.
-            # If result is a list of messages (standard for chat), extract last content.
-            if isinstance(result, list):
-                 # Check if it's the full conversation
-                 last_msg = result[-1]
-                 if last_msg.get('role') == 'assistant':
-                     return last_msg['content']
-                 else:
-                     # Fallback
-                     return str(result)
-            return str(result)
+                return f"Generation Error: {e}"
 
 _shared_generator = None
 
