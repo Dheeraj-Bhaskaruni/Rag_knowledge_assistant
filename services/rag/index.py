@@ -9,23 +9,22 @@ from .embed import get_embedder
 
 def load_processed_data(processed_dir: str) -> List[Dict]:
     chunks = []
-    # Read manifest if exists, or just iterate JSONs
-    manifest_path = os.path.join(processed_dir, "manifest.json")
-    if os.path.exists(manifest_path):
-        with open(manifest_path, 'r') as f:
-            manifest = json.load(f)
-        for entry in manifest:
-            with open(entry['path'], 'r') as f:
+    # Always glob for all JSONs to support additive ingestion
+    import glob
+    json_files = glob.glob(os.path.join(processed_dir, "*.json"))
+    
+    print(f"Found {len(json_files)} existing documents to index.")
+    
+    for f_path in json_files:
+        if f_path.endswith("manifest.json"): continue
+        try:
+            with open(f_path, 'r') as f:
                 doc_data = json.load(f)
-                chunks.extend(doc_data['chunks'])
-    else:
-        # Fallback to glob
-         import glob
-         for f_path in glob.glob(os.path.join(processed_dir, "*.json")):
-             if f_path.endswith("manifest.json"): continue
-             with open(f_path, 'r') as f:
-                doc_data = json.load(f)
-                chunks.extend(doc_data['chunks'])
+                if 'chunks' in doc_data:
+                    chunks.extend(doc_data['chunks'])
+        except Exception as e:
+            print(f"Error loading {f_path}: {e}")
+            
     return chunks
 
 def build_index(processed_dir: str, output_dir: str):

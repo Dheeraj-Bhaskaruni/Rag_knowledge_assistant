@@ -91,45 +91,69 @@ def chat_fn(message, history, backend):
     return final_response
 
 
-def admin_ingest(files, use_sample):
-    # 1. Clean Data & Temp Dirs (Fresh Start)
-    temp_in = "temp_ingest"
-    dirs_to_clean = [temp_in, PROCESSED_DIR, INDEX_DIR]
-    
-    for d in dirs_to_clean:
+
+def clear_knowledge_base():
+    # Helper to wipe data
+    for d in [PROCESSED_DIR, INDEX_DIR]:
         if os.path.exists(d):
             shutil.rmtree(d)
         os.makedirs(d)
     
-    status = "Starting ingestion...\n"
+    # Reset helper
+    import services.rag.retrieve
+    services.rag.retrieve._shared_retriever = None
+    init_services()
+    
+    return "Knowledge Base Cleared. System is empty."
+
+def admin_ingest(files, use_sample):
+    # 1. Clean Temp Input ONLY (Keep Processed/Index for additive)
+    temp_in = "temp_ingest"
+    if os.path.exists(temp_in):
+        shutil.rmtree(temp_in)
+    os.makedirs(temp_in)
+    
+    # Ensure processed/index dirs exist
+    os.makedirs(PROCESSED_DIR, exist_ok=True)
+    os.makedirs(INDEX_DIR, exist_ok=True)
+    
+    status = "Starting processing...\n"
     
     # Handle Source Selection
+    files_found = False
+    
     if use_sample:
         # Copy from samples dir
         sample_file = os.path.join(SAMPLES_DIR, "sports_legends.txt")
         if os.path.exists(sample_file):
             shutil.copy(sample_file, temp_in)
-            status += f"Loaded sample data: {sample_file}\n"
+            status += f"Loaded: Sports Legends Dataset\n"
+            files_found = True
         else:
             return "Error: Sample data not found on server."
-    elif files:
+            
+    if files:
         # Copy uploaded files
         for file in files:
             shutil.copy(file.name, temp_in)
-        status += f"Loaded {len(files)} uploaded files.\n"
-    else:
-        return "No files selected and 'Use Sample' not checked."
+        status += f"Loaded: {len(files)} new files.\n"
+        files_found = True
+    
+    if not files_found:
+        return "No new files selected. Select files or sample data."
         
     yield status
     
     # Run Ingest
     try:
+        # Ingest new files to PROCESSED_DIR (Additive)
         ingest(temp_in, PROCESSED_DIR)
-        status += "Ingestion complete.\nBuilding Index...\n"
+        status += "Processing new files complete.\nRebuilding Index...\n"
         yield status
         
+        # Build Index (scans ALL files in PROCESSED_DIR)
         build_index(PROCESSED_DIR, INDEX_DIR)
-        status += "Index built successfully.\nReloading services...\n"
+        status += "Index rebuilt with all documents.\nReloading services...\n"
         yield status
         
         # FORCE RELOAD: Clear singletons
@@ -137,7 +161,7 @@ def admin_ingest(files, use_sample):
         services.rag.retrieve._shared_retriever = None
         
         init_services()
-        status += "Services reloaded. Index updated successfully."
+        status += "Services reloaded. Knowledge Base Updated successfully!"
     except Exception as e:
         print(f"Ingestion Failed: {e}") # Print to server logs
         import traceback
@@ -172,6 +196,7 @@ with gr.Blocks(title="RAG Knowledge Assistant", theme=gr.themes.Soft()) as demo:
                 )
                 
                 ingest_btn = gr.Button("Process Documents", variant="primary", size="sm")
+                clear_btn = gr.Button("Clear Knowledge Base", variant="stop", size="sm")
             
             # Status Log - Visible by default
             with gr.Accordion("System Logs", open=True):
@@ -187,6 +212,11 @@ with gr.Blocks(title="RAG Knowledge Assistant", theme=gr.themes.Soft()) as demo:
             ingest_btn.click(
                 admin_ingest, 
                 inputs=[file_upload, use_sample_chk], 
+                outputs=[status_box]
+            )
+            
+            clear_btn.click(
+                clear_knowledge_base,
                 outputs=[status_box]
             )
             
