@@ -192,7 +192,10 @@ with gr.Blocks(title="RAG Assistant") as demo:
                 additional_inputs=[backend_radio],
                 title="Chat with your Documents",
                 description="Ask questions about the content you indexed in the 'Knowledge Base' tab.",
-                examples=["Who is the greatest quarterback?", "Summary of Lionel Messi"]
+                examples=[
+                    ["Who is the greatest quarterback?", "openai"], 
+                    ["Summary of Lionel Messi", "local"]
+                ]
             )
 
 if __name__ == "__main__":
