@@ -16,7 +16,8 @@ class Embedder:
             self.client = OpenAI(api_key=api_key)
         else:
             print(f"Loading local embedding model: {model_name}")
-            self.model = SentenceTransformer(model_name)
+            # Force CPU to avoid ZeroGPU conflicts during ingestion
+            self.model = SentenceTransformer(model_name, device="cpu")
 
     def embed(self, texts: List[str]) -> np.ndarray:
         if not texts:

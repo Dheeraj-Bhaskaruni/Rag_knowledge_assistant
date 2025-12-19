@@ -119,6 +119,9 @@ def admin_ingest(files):
         init_services()
         status += "Services reloaded. Ready to chat."
     except Exception as e:
+        print(f"Ingestion Failed: {e}") # Print to server logs
+        import traceback
+        traceback.print_exc()
         status += f"Error: {e}"
         
     return status
