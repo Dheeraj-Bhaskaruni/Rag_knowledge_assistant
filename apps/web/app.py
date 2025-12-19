@@ -140,13 +140,30 @@ def admin_ingest(files, use_sample):
 # Initialize on module load
 init_services()
 
-with gr.Blocks(title="RAG Assistant") as demo:
-    gr.Markdown("# 🤖 RAG Knowledge Assistant")
-    gr.Markdown("Build your own Knowledge Base and chat with it locally or via API.")
+with gr.Blocks(title="RAG Knowledge Assistant", theme=gr.themes.Soft()) as demo:
+    gr.Markdown("# 🤖 Super Smart Knowledge Assistant")
     
+    with gr.Row():
+        gr.HTML("""
+        <div style="background-color: #f0f9ff; padding: 20px; border-radius: 10px; border: 2px solid #3b82f6;">
+            <h3 style="color: #1e40af; margin-top: 0;">👋 Hi! I'm your AI Helper!</h3>
+            <p style="font-size: 16px;">I can learn from <b>ANY</b> document you give me. creating your own Google is easy as 1-2-3!</p>
+            <div style="display: flex; gap: 20px; margin-top: 15px;">
+                <div style="flex: 1; background: white; padding: 15px; border-radius: 8px; border-left: 5px solid #10b981;">
+                    <h4 style="color: #059669;">Step 1: Teach Me 🍎</h4>
+                    <p>Go to <b>'1. Teach Me'</b> tab.<br>Upload a PDF or just click "Use Sample Data".<br>Then hit the big <b>🚀 Ingest</b> button!</p>
+                </div>
+                <div style="flex: 1; background: white; padding: 15px; border-radius: 8px; border-left: 5px solid #8b5cf6;">
+                    <h4 style="color: #7c3aed;">Step 2: Chat with Me 💬</h4>
+                    <p>Go to <b>'2. Talk to Me'</b> tab.<br>Pick your brain (OpenAI, Gemini, or Local).<br>Ask me anything about what you taught me!</p>
+                </div>
+            </div>
+        </div>
+        """)
+
     with gr.Tabs():
         # Tab 1: Knowledge Base (Ingestion)
-        with gr.Tab("1. Knowledge Base"):
+        with gr.Tab("1. Teach Me (Knowledge Base)"):
             gr.Markdown("### Step 1: Choose Your Data Source")
             
             with gr.Row():
@@ -176,7 +193,7 @@ with gr.Blocks(title="RAG Assistant") as demo:
             )
 
         # Tab 2: Chat Interface
-        with gr.Tab("2. Chat Assistant"):
+        with gr.Tab("2. Talk to Me (Chat)"):
             gr.Markdown("### Step 3: Ask Questions")
             
             with gr.Accordion("⚙️ Model Settings", open=True):
