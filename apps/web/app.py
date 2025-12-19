@@ -145,7 +145,7 @@ with gr.Blocks(title="RAG Knowledge Assistant", theme=gr.themes.Soft()) as demo:
     gr.Markdown("# 🤖 RAG Knowledge Assistant")
     
     with gr.Row():
-    with gr.Row():
+
         # Left Column: Sidebar (Controls & Guide)
         with gr.Column(scale=1, variant="panel"):
             gr.Markdown("### 🎛️ Control Panel")
