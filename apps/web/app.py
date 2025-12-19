@@ -145,26 +145,39 @@ with gr.Blocks(title="RAG Knowledge Assistant", theme=gr.themes.Soft()) as demo:
     gr.Markdown("# 🤖 RAG Knowledge Assistant")
     
     with gr.Row():
+    with gr.Row():
         # Left Column: Sidebar (Controls & Guide)
         with gr.Column(scale=1, variant="panel"):
-            gr.Markdown("### 1. Teach Me 🍎")
-            gr.Markdown("Upload docs to build your brain.")
+            gr.Markdown("### 🎛️ Control Panel")
             
-            file_upload = gr.File(
-                label="Upload Files (PDF/TXT)", 
-                file_count="multiple",
-                file_types=[".pdf", ".txt", ".html"]
-            )
+            with gr.Group():
+                gr.Markdown("#### 1. Knowledge Base")
+                file_upload = gr.File(
+                    label="Upload Documents", 
+                    file_count="multiple",
+                    file_types=[".pdf", ".txt", ".html"],
+                    height=100
+                )
+                
+                gr.HTML("<div style='text-align: center; color: #666; font-size: 12px; margin: 5px 0;'>— OR —</div>")
+                
+                use_sample_chk = gr.Checkbox(
+                    label="Load Sports Legends (Demo)", 
+                    container=False
+                )
+                
+                ingest_btn = gr.Button("🚀 Update Brain", variant="primary")
             
-            gr.HTML("<div style='text-align: center; margin: 10px 0; color: #888; font-weight: bold;'>OR</div>")
-            
-            use_sample_chk = gr.Checkbox(
-                label="Load 'Sports Legends' (Demo)", 
-                info="Use built-in data about Messi, Brady, etc."
-            )
-            
-            ingest_btn = gr.Button("🚀 Ingest", variant="primary")
-            status_box = gr.Textbox(label="Status", value="Ready.", interactive=False, lines=4, max_lines=4)
+            # Status Log - Hidden by default to save space
+            with gr.Accordion("📝 View Logs", open=False):
+                status_box = gr.Textbox(
+                    show_label=False, 
+                    value="System Ready.", 
+                    interactive=False, 
+                    lines=4, 
+                    max_lines=10,
+                    text_align="left"
+                )
             
             ingest_btn.click(
                 admin_ingest, 
@@ -172,15 +185,15 @@ with gr.Blocks(title="RAG Knowledge Assistant", theme=gr.themes.Soft()) as demo:
                 outputs=[status_box]
             )
             
-            gr.HTML("<hr>")
-            
-            gr.Markdown("### 2. Configure ⚙️")
-            backend_radio = gr.Radio(
-                choices=["openai", "gemini", "local"], 
-                value="openai", 
-                label="Brain / Model",
-                info="Local = ZeroGPU (Slow Start)"
-            )
+            gr.Markdown("#### 2. Model Settings")
+            with gr.Group():
+                backend_radio = gr.Radio(
+                    choices=["openai", "gemini", "local"], 
+                    value="openai", 
+                    label="Active Brain",
+                    container=False
+                )
+                gr.Markdown("*Local = ZeroGPU*", props={"style": "font-size: 10px; color: #888; margin-top: 5px;"})
 
         # Right Column: Main App (Chat)
         with gr.Column(scale=4):
