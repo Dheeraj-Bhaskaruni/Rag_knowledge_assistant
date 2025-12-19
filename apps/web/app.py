@@ -142,9 +142,7 @@ def admin_ingest(files, use_sample):
 init_services()
 
 with gr.Blocks(title="RAG Knowledge Assistant", theme=gr.themes.Soft()) as demo:
-    gr.Markdown("# 🤖 Super Smart Knowledge Assistant")
-    
-    gr.Markdown("# 🤖 Super Smart Knowledge Assistant")
+    gr.Markdown("# 🤖 RAG Knowledge Assistant")
     
     with gr.Row():
         # Left Column: Guide (Scale 1)
