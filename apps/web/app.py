@@ -137,7 +137,7 @@ def admin_ingest(files, use_sample):
         services.rag.retrieve._shared_retriever = None
         
         init_services()
-        status += "Services reloaded. Brain Updated! 🧠"
+        status += "Services reloaded. Index updated successfully."
     except Exception as e:
         print(f"Ingestion Failed: {e}") # Print to server logs
         import traceback
@@ -150,7 +150,7 @@ def admin_ingest(files, use_sample):
 init_services()
 
 with gr.Blocks(title="RAG Knowledge Assistant", theme=gr.themes.Soft()) as demo:
-    gr.Markdown("# 🤖 RAG Knowledge Assistant")
+    gr.Markdown("# RAG Knowledge Assistant")
     
     with gr.Row():
 
@@ -158,7 +158,7 @@ with gr.Blocks(title="RAG Knowledge Assistant", theme=gr.themes.Soft()) as demo:
         with gr.Column(scale=1, variant="panel"):
             with gr.Group():
                 file_upload = gr.File(
-                    label="Upload Multiple Docs", 
+                    label="Document Upload", 
                     file_count="multiple",
                     file_types=[".pdf", ".txt", ".html"],
                     height=70
@@ -167,14 +167,14 @@ with gr.Blocks(title="RAG Knowledge Assistant", theme=gr.themes.Soft()) as demo:
                 gr.HTML("<div style='text-align: center; color: #666; font-size: 11px; margin: 2px 0;'>— OR —</div>")
                 
                 use_sample_chk = gr.Checkbox(
-                    label="Sports Legends (Demo)", 
+                    label="Use Sample Dataset", 
                     container=False
                 )
                 
-                ingest_btn = gr.Button("🚀 Update Brain", variant="primary", size="sm")
+                ingest_btn = gr.Button("Process Documents", variant="primary", size="sm")
             
             # Status Log - Visible by default
-            with gr.Accordion("📝 View Logs", open=True):
+            with gr.Accordion("System Logs", open=True):
                 status_box = gr.Textbox(
                     show_label=False, 
                     value="System Ready.", 
@@ -194,18 +194,18 @@ with gr.Blocks(title="RAG Knowledge Assistant", theme=gr.themes.Soft()) as demo:
                 backend_radio = gr.Radio(
                     choices=["openai", "gemini", "local"], 
                     value="openai", 
-                    label="Brain / Model",
+                    label="LLM Backend",
                     container=False
                 )
-                gr.HTML("<div style='font-size: 9px; color: #888; margin-top: 2px;'>*Local = ZeroGPU</div>")
+                gr.HTML("<div style='font-size: 9px; color: #888; margin-top: 2px;'>*Local execution using ZeroGPU</div>")
 
         # Right Column: Main App (Chat)
         with gr.Column(scale=4):
             chatbot = gr.ChatInterface(
                 fn=chat_fn, 
                 additional_inputs=[backend_radio],
-                title="💬 Talk to Me",
-                description="I will answer based on the documents you taught me!",
+                title="Chat Interface",
+                description="Ask questions about your uploaded documents.",
                 examples=[
                     ["Who is the greatest quarterback?", "openai"], 
                     ["Summary of Lionel Messi", "local"]
