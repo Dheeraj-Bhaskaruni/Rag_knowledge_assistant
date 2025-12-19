@@ -12,37 +12,19 @@ import shutil
 import spaces
 from services.rag.retrieve import get_retriever
 from services.rag.rerank import get_reranker
-from services.rag.generate import get_generator
+from services.rag.generate import get_generator, run_local_generation
 from services.rag.ingest import ingest
 from services.rag.index import build_index
 from services.observability.langfuse_client import observe
 
-# Constants
-DATA_DIR = "data"
-PROCESSED_DIR = os.path.join(DATA_DIR, "processed")
-INDEX_DIR = os.path.join(DATA_DIR, "index")
-SAMPLE_DOCS_DIR = "sample_docs"
-
-# Global Singletons
-retriever = None
-reranker = None
-generator = None
-
-def init_services():
-    global retriever, reranker, generator
-    try:
-        if os.path.exists(INDEX_DIR):
-             retriever = get_retriever(INDEX_DIR)
-        reranker = get_reranker()
-        generator = get_generator()
-    except Exception as e:
-        print(f"Service init warning: {e}")
+# ...
 
 # GPU-wrapped generation function
 @spaces.GPU
-def generate_response_gpu(message, history, backend):
-    # This function runs on ZeroGPU
-    return generator.generate(message, "", backend=backend)
+def generate_response_gpu(message, context_chunks, backend):
+    # Call the standalone function directly
+    # Note: We must pass data, not the service instance
+    return run_local_generation(message, context_chunks)
 
 @observe(name="chat_interaction")
 def chat_fn(message, history, backend):
@@ -69,7 +51,10 @@ def chat_fn(message, history, backend):
     reranked = reranker.rerank(full_query, retrieved, top_k=5)
     
     # 3. Generate
-    answer = generator.generate(full_query, reranked, backend=backend)
+    if backend == "local":
+        answer = generate_response_gpu(full_query, reranked, backend)
+    else:
+        answer = generator.generate(full_query, reranked, backend=backend)
     
     # 4. Format Output with Evidence
     elapsed = time.time() - start_time
