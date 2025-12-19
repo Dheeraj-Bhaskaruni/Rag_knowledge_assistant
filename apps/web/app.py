@@ -16,8 +16,26 @@ from services.rag.generate import get_generator, run_local_generation
 from services.rag.ingest import ingest
 from services.rag.index import build_index
 from services.observability.langfuse_client import observe
+# Constants
+DATA_DIR = "data"
+PROCESSED_DIR = os.path.join(DATA_DIR, "processed")
+INDEX_DIR = os.path.join(DATA_DIR, "index")
+SAMPLE_DOCS_DIR = "sample_docs"
 
-# ...
+# Global Singletons
+retriever = None
+reranker = None
+generator = None
+
+def init_services():
+    global retriever, reranker, generator
+    try:
+        if os.path.exists(INDEX_DIR):
+             retriever = get_retriever(INDEX_DIR)
+        reranker = get_reranker()
+        generator = get_generator()
+    except Exception as e:
+        print(f"Service init warning: {e}")
 
 # GPU-wrapped generation function
 @spaces.GPU
