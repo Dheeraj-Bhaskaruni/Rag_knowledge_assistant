@@ -11,6 +11,8 @@ pinned: false
 
 # RAG Knowledge Assistant
 
+**🚀 Live Demo Deployed on Hugging Face Spaces: [Check it out here!](https://huggingface.co/spaces/Dheeraj-13/RAG_Knowledge_Assistant)**
+
 A production-ready RAG system featuring:
 - **Grounded Answers**: Strict ciation of sources.
 - **Evaluation**: Integrated offline eval harness.
