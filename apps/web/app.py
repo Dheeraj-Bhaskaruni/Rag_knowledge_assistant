@@ -156,7 +156,7 @@ with gr.Blocks(title="RAG Knowledge Assistant", theme=gr.themes.Soft()) as demo:
                 file_types=[".pdf", ".txt", ".html"]
             )
             
-            gr.Markdown("**OR**", props={"style": "text-align: center; margin: 10px 0; color: #888;"})
+            gr.HTML("<div style='text-align: center; margin: 10px 0; color: #888; font-weight: bold;'>OR</div>")
             
             use_sample_chk = gr.Checkbox(
                 label="Load 'Sports Legends' (Demo)", 
