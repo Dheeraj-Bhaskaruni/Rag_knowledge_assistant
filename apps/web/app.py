@@ -137,7 +137,7 @@ with gr.Blocks(title="RAG Assistant") as demo:
             # Configuration Accordion
             with gr.Accordion("Settings", open=True):
                 backend_radio = gr.Radio(
-                    choices=["openai", "local"], 
+                    choices=["openai", "gemini", "local"], 
                     value="openai", 
                     label="LLM Backend"
                 )

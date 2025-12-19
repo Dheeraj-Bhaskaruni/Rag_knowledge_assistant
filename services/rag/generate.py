@@ -1,6 +1,7 @@
 import os
 from typing import List, Dict
 from openai import OpenAI
+import google.generativeai as genai
 from ..observability.langfuse_client import observe
 import torch
 
@@ -79,12 +80,23 @@ class GeneratorService:
     def __init__(self):
         self.openai_client = None
         self.openai_model = "gpt-4o-mini"
+        self.gemini_configured = False
         
-        api_key = os.getenv("OPENAI_API_KEY")
-        if api_key:
-            self.openai_client = OpenAI(api_key=api_key)
+        # Initialize OpenAI
+        openai_key = os.getenv("OPENAI_API_KEY")
+        if openai_key:
+            self.openai_client = OpenAI(api_key=openai_key)
         else:
             print("Warning: OPENAI_API_KEY not found. OpenAI backend will not work.")
+            
+        # Initialize Gemini
+        gemini_key = os.getenv("GEMINI_API_KEY")
+        if gemini_key:
+            genai.configure(api_key=gemini_key)
+            self.gemini_model = genai.GenerativeModel("gemini-1.5-flash")
+            self.gemini_configured = True
+        else:
+            print("Warning: GEMINI_API_KEY not found. Gemini backend will not work.")
 
     @observe(name="generate")
     def generate(self, query: str, context_chunks: List[Dict], backend: str = "openai") -> str:
@@ -93,9 +105,20 @@ class GeneratorService:
         if backend == "local":
             return run_local_generation(query, context_chunks)
             
-        # OpenAI Logic
         context = _format_context(context_chunks)
+        full_input = f"{SYSTEM_PROMPT}\n\nContext:\n{context}\n\nQuestion: {query}"
         
+        # Dispatch to Gemini
+        if backend == "gemini":
+            if not self.gemini_configured:
+                return "Error: Gemini backend selected but GEMINI_API_KEY not found."
+            try:
+                response = self.gemini_model.generate_content(full_input)
+                return response.text
+            except Exception as e:
+                return f"Gemini Error: {e}"
+            
+        # OpenAI Logic (Default)
         if self.openai_client is None:
              return "Error: OpenAI backend selected but OPENAI_API_KEY not found."
 
