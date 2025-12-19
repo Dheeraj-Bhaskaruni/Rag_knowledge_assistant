@@ -93,7 +93,7 @@ class GeneratorService:
         gemini_key = os.getenv("GEMINI_API_KEY")
         if gemini_key:
             genai.configure(api_key=gemini_key)
-            self.gemini_model = genai.GenerativeModel("gemini-1.5-flash")
+            self.gemini_model = genai.GenerativeModel("gemini-2.5-flash")
             self.gemini_configured = True
         else:
             print("Warning: GEMINI_API_KEY not found. Gemini backend will not work.")
