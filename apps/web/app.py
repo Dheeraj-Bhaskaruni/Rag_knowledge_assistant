@@ -90,12 +90,16 @@ def chat_fn(message, history, backend):
     final_response = f"{answer}\n\n{sources_text}\n*(Backend: {backend} | Time: {elapsed:.2f}s)*"
     return final_response
 
+
 def admin_ingest(files, use_sample):
-    # Create temp input dir
+    # 1. Clean Data & Temp Dirs (Fresh Start)
     temp_in = "temp_ingest"
-    if os.path.exists(temp_in):
-        shutil.rmtree(temp_in)
-    os.makedirs(temp_in)
+    dirs_to_clean = [temp_in, PROCESSED_DIR, INDEX_DIR]
+    
+    for d in dirs_to_clean:
+        if os.path.exists(d):
+            shutil.rmtree(d)
+        os.makedirs(d)
     
     status = "Starting ingestion...\n"
     
@@ -128,8 +132,12 @@ def admin_ingest(files, use_sample):
         status += "Index built successfully.\nReloading services...\n"
         yield status
         
+        # FORCE RELOAD: Clear singletons
+        import services.rag.retrieve
+        services.rag.retrieve._shared_retriever = None
+        
         init_services()
-        status += "Services reloaded. Ready to chat."
+        status += "Services reloaded. Brain Updated! 🧠"
     except Exception as e:
         print(f"Ingestion Failed: {e}") # Print to server logs
         import traceback
@@ -150,7 +158,7 @@ with gr.Blocks(title="RAG Knowledge Assistant", theme=gr.themes.Soft()) as demo:
         with gr.Column(scale=1, variant="panel"):
             with gr.Group():
                 file_upload = gr.File(
-                    label="Upload Docs", 
+                    label="Upload Multiple Docs", 
                     file_count="multiple",
                     file_types=[".pdf", ".txt", ".html"],
                     height=70
