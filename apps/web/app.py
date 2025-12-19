@@ -148,25 +148,22 @@ with gr.Blocks(title="RAG Knowledge Assistant", theme=gr.themes.Soft()) as demo:
 
         # Left Column: Sidebar (Controls & Guide)
         with gr.Column(scale=1, variant="panel"):
-            gr.Markdown("### 🎛️ Control Panel")
-            
             with gr.Group():
-                gr.Markdown("#### 1. Knowledge Base")
                 file_upload = gr.File(
-                    label="Upload Documents", 
+                    label="Upload Docs", 
                     file_count="multiple",
                     file_types=[".pdf", ".txt", ".html"],
-                    height=100
+                    height=70
                 )
                 
-                gr.HTML("<div style='text-align: center; color: #666; font-size: 12px; margin: 5px 0;'>— OR —</div>")
+                gr.HTML("<div style='text-align: center; color: #666; font-size: 11px; margin: 2px 0;'>— OR —</div>")
                 
                 use_sample_chk = gr.Checkbox(
-                    label="Load Sports Legends (Demo)", 
+                    label="Sports Legends (Demo)", 
                     container=False
                 )
                 
-                ingest_btn = gr.Button("🚀 Update Brain", variant="primary")
+                ingest_btn = gr.Button("🚀 Update Brain", variant="primary", size="sm")
             
             # Status Log - Hidden by default to save space
             with gr.Accordion("📝 View Logs", open=False):
@@ -185,15 +182,14 @@ with gr.Blocks(title="RAG Knowledge Assistant", theme=gr.themes.Soft()) as demo:
                 outputs=[status_box]
             )
             
-            gr.Markdown("#### 2. Model Settings")
             with gr.Group():
                 backend_radio = gr.Radio(
                     choices=["openai", "gemini", "local"], 
                     value="openai", 
-                    label="Active Brain",
+                    label="Brain / Model",
                     container=False
                 )
-                gr.HTML("<div style='font-size: 10px; color: #888; margin-top: 5px;'>*Local = ZeroGPU</div>")
+                gr.HTML("<div style='font-size: 9px; color: #888; margin-top: 2px;'>*Local = ZeroGPU</div>")
 
         # Right Column: Main App (Chat)
         with gr.Column(scale=4):
