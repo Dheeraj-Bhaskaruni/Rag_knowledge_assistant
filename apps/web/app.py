@@ -155,4 +155,4 @@ with gr.Blocks(title="RAG Assistant") as demo:
 
 if __name__ == "__main__":
     # specific server_name needed for Docker/Spaces
-    demo.queue().launch(server_name="0.0.0.0", ssr_mode=False)
+    demo.queue().launch(server_name="0.0.0.0")
