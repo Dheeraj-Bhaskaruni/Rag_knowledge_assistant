@@ -144,77 +144,77 @@ init_services()
 with gr.Blocks(title="RAG Knowledge Assistant", theme=gr.themes.Soft()) as demo:
     gr.Markdown("# 🤖 Super Smart Knowledge Assistant")
     
+    gr.Markdown("# 🤖 Super Smart Knowledge Assistant")
+    
     with gr.Row():
-        gr.HTML("""
-        <div style="background-color: #f0f9ff; padding: 20px; border-radius: 10px; border: 2px solid #3b82f6;">
-            <h3 style="color: #1e40af; margin-top: 0;">👋 Hi! I'm your AI Helper!</h3>
-            <p style="font-size: 16px;">I can learn from <b>ANY</b> document you give me. creating your own Google is easy as 1-2-3!</p>
-            <div style="display: flex; gap: 20px; margin-top: 15px;">
-                <div style="flex: 1; background: white; padding: 15px; border-radius: 8px; border-left: 5px solid #10b981;">
-                    <h4 style="color: #059669;">Step 1: Teach Me 🍎</h4>
-                    <p>Go to <b>'1. Teach Me'</b> tab.<br>Upload a PDF or just click "Use Sample Data".<br>Then hit the big <b>🚀 Ingest</b> button!</p>
-                </div>
-                <div style="flex: 1; background: white; padding: 15px; border-radius: 8px; border-left: 5px solid #8b5cf6;">
-                    <h4 style="color: #7c3aed;">Step 2: Chat with Me 💬</h4>
-                    <p>Go to <b>'2. Talk to Me'</b> tab.<br>Pick your brain (OpenAI, Gemini, or Local).<br>Ask me anything about what you taught me!</p>
-                </div>
-            </div>
-        </div>
-        """)
+        # Left Column: Guide (Scale 1)
+        with gr.Column(scale=1):
+            gr.Markdown("### 👋 Hi! I'm your AI Helper!")
+            gr.Markdown("I can learn from **ANY** document you give me. Creating your own Google is easy as 1-2-3!")
+            
+            with gr.Group():
+                gr.Markdown("#### Step 1: Teach Me 🍎")
+                gr.Markdown("1. Go to **'1. Teach Me'** tab.\n2. Upload a PDF or check **'Load Sports Legends'**.\n3. Click **🚀 Ingest**.")
+            
+            with gr.Group():
+                gr.Markdown("#### Step 2: Chat with Me 💬")
+                gr.Markdown("1. Go to **'2. Talk to Me'** tab.\n2. Pick **Gemini/OpenAI**.\n3. Ask me anything!")
 
-    with gr.Tabs():
-        # Tab 1: Knowledge Base (Ingestion)
-        with gr.Tab("1. Teach Me (Knowledge Base)"):
-            gr.Markdown("### Step 1: Choose Your Data Source")
-            
-            with gr.Row():
-                with gr.Column():
-                    gr.Markdown("#### Option A: Upload Documents")
-                    file_upload = gr.File(
-                        label="Upload PDF / TXT / HTML", 
-                        file_count="multiple",
-                        file_types=[".pdf", ".txt", ".html"]
+        # Right Column: Main App (Scale 3)
+        with gr.Column(scale=3):
+            with gr.Tabs():
+                # Tab 1: Knowledge Base (Ingestion)
+                with gr.Tab("1. Teach Me (Knowledge Base)"):
+                    gr.Markdown("### Step 1: Choose Your Data Source")
+                    
+                    with gr.Row():
+                        with gr.Column():
+                            gr.Markdown("#### Option A: Upload Documents")
+                            file_upload = gr.File(
+                                label="Upload PDF / TXT / HTML", 
+                                file_count="multiple",
+                                file_types=[".pdf", ".txt", ".html"]
+                            )
+                        with gr.Column():
+                            gr.Markdown("#### Option B: Use Sample Data")
+                            use_sample_chk = gr.Checkbox(
+                                label="Load 'Sports Legends' Dataset", 
+                                info="Perfect for testing without your own files."
+                            )
+                    
+                    gr.Markdown("### Step 2: Build Index")
+                    ingest_btn = gr.Button("🚀 Ingest & Re-Index", variant="primary")
+                    
+                    status_box = gr.Textbox(label="System Status", value="Ready.", interactive=False, lines=5)
+                    
+                    ingest_btn.click(
+                        admin_ingest, 
+                        inputs=[file_upload, use_sample_chk], 
+                        outputs=[status_box]
                     )
-                with gr.Column():
-                    gr.Markdown("#### Option B: Use Sample Data")
-                    use_sample_chk = gr.Checkbox(
-                        label="Load 'Sports Legends' Dataset", 
-                        info="Perfect for testing without your own files."
-                    )
-            
-            gr.Markdown("### Step 2: Build Index")
-            ingest_btn = gr.Button("🚀 Ingest & Re-Index", variant="primary")
-            
-            status_box = gr.Textbox(label="System Status", value="Ready.", interactive=False, lines=5)
-            
-            ingest_btn.click(
-                admin_ingest, 
-                inputs=[file_upload, use_sample_chk], 
-                outputs=[status_box]
-            )
 
-        # Tab 2: Chat Interface
-        with gr.Tab("2. Talk to Me (Chat)"):
-            gr.Markdown("### Step 3: Ask Questions")
-            
-            with gr.Accordion("⚙️ Model Settings", open=True):
-                backend_radio = gr.Radio(
-                    choices=["openai", "gemini", "local"], 
-                    value="openai", 
-                    label="Select LLM Backend",
-                    info="OpenAI/Gemini require API Keys. Local runs on ZeroGPU (slower cold start)."
-                )
-            
-            chatbot = gr.ChatInterface(
-                fn=chat_fn, 
-                additional_inputs=[backend_radio],
-                title="Chat with your Documents",
-                description="Ask questions about the content you indexed in the 'Knowledge Base' tab.",
-                examples=[
-                    ["Who is the greatest quarterback?", "openai"], 
-                    ["Summary of Lionel Messi", "local"]
-                ]
-            )
+                # Tab 2: Chat Interface
+                with gr.Tab("2. Talk to Me (Chat)"):
+                    gr.Markdown("### Step 3: Ask Questions")
+                    
+                    with gr.Accordion("⚙️ Model Settings", open=True):
+                        backend_radio = gr.Radio(
+                            choices=["openai", "gemini", "local"], 
+                            value="openai", 
+                            label="Select LLM Backend",
+                            info="OpenAI/Gemini require API Keys. Local runs on ZeroGPU (slower cold start)."
+                        )
+                    
+                    chatbot = gr.ChatInterface(
+                        fn=chat_fn, 
+                        additional_inputs=[backend_radio],
+                        title="Chat with your Documents",
+                        description="Ask questions about the content you indexed in the 'Knowledge Base' tab.",
+                        examples=[
+                            ["Who is the greatest quarterback?", "openai"], 
+                            ["Summary of Lionel Messi", "local"]
+                        ]
+                    )
 
 if __name__ == "__main__":
     # specific server_name needed for Docker/Spaces
