@@ -20,7 +20,7 @@ from services.observability.langfuse_client import observe
 DATA_DIR = "data"
 PROCESSED_DIR = os.path.join(DATA_DIR, "processed")
 INDEX_DIR = os.path.join(DATA_DIR, "index")
-SAMPLE_DOCS_DIR = "sample_docs"
+SAMPLES_DIR = "samples"
 
 # Global Singletons
 retriever = None
@@ -52,7 +52,7 @@ def chat_fn(message, history, backend):
         # Try to reload if index was just built
         init_services()
         if retriever is None:
-            return "System is not ready. Please go to Admin tab and ingest documents or check logs."
+            return "System is not ready. Please go to '1. Knowledge Base' tab and ingest documents."
     
     # 0. Contextualize Query (Simple)
     full_query = message
@@ -89,24 +89,35 @@ def chat_fn(message, history, backend):
     final_response = f"{answer}\n\n{sources_text}\n*(Backend: {backend} | Time: {elapsed:.2f}s)*"
     return final_response
 
-def admin_ingest(files):
-    # files is a list of file paths
-    # Copy files to a temp ingest folder or directly process
-    if not files:
-        return "No files selected."
-        
+def admin_ingest(files, use_sample):
     # Create temp input dir
     temp_in = "temp_ingest"
     if os.path.exists(temp_in):
         shutil.rmtree(temp_in)
     os.makedirs(temp_in)
     
-    for file in files:
-        shutil.copy(file.name, temp_in)
-        
-    # Run Ingest
     status = "Starting ingestion...\n"
+    
+    # Handle Source Selection
+    if use_sample:
+        # Copy from samples dir
+        sample_file = os.path.join(SAMPLES_DIR, "sports_legends.txt")
+        if os.path.exists(sample_file):
+            shutil.copy(sample_file, temp_in)
+            status += f"Loaded sample data: {sample_file}\n"
+        else:
+            return "Error: Sample data not found on server."
+    elif files:
+        # Copy uploaded files
+        for file in files:
+            shutil.copy(file.name, temp_in)
+        status += f"Loaded {len(files)} uploaded files.\n"
+    else:
+        return "No files selected and 'Use Sample' not checked."
+        
     yield status
+    
+    # Run Ingest
     try:
         ingest(temp_in, PROCESSED_DIR)
         status += "Ingestion complete.\nBuilding Index...\n"
@@ -130,31 +141,59 @@ def admin_ingest(files):
 init_services()
 
 with gr.Blocks(title="RAG Assistant") as demo:
-    gr.Markdown("# Production RAG Knowledge Assistant")
+    gr.Markdown("# 🤖 RAG Knowledge Assistant")
+    gr.Markdown("Build your own Knowledge Base and chat with it locally or via API.")
     
     with gr.Tabs():
-        with gr.Tab("Chat"):
-            # Configuration Accordion
-            with gr.Accordion("Settings", open=True):
+        # Tab 1: Knowledge Base (Ingestion)
+        with gr.Tab("1. Knowledge Base"):
+            gr.Markdown("### Step 1: Choose Your Data Source")
+            
+            with gr.Row():
+                with gr.Column():
+                    gr.Markdown("#### Option A: Upload Documents")
+                    file_upload = gr.File(
+                        label="Upload PDF / TXT / HTML", 
+                        file_count="multiple",
+                        file_types=[".pdf", ".txt", ".html"]
+                    )
+                with gr.Column():
+                    gr.Markdown("#### Option B: Use Sample Data")
+                    use_sample_chk = gr.Checkbox(
+                        label="Load 'Sports Legends' Dataset", 
+                        info="Perfect for testing without your own files."
+                    )
+            
+            gr.Markdown("### Step 2: Build Index")
+            ingest_btn = gr.Button("🚀 Ingest & Re-Index", variant="primary")
+            
+            status_box = gr.Textbox(label="System Status", value="Ready.", interactive=False, lines=5)
+            
+            ingest_btn.click(
+                admin_ingest, 
+                inputs=[file_upload, use_sample_chk], 
+                outputs=[status_box]
+            )
+
+        # Tab 2: Chat Interface
+        with gr.Tab("2. Chat Assistant"):
+            gr.Markdown("### Step 3: Ask Questions")
+            
+            with gr.Accordion("⚙️ Model Settings", open=True):
                 backend_radio = gr.Radio(
                     choices=["openai", "gemini", "local"], 
                     value="openai", 
-                    label="LLM Backend"
+                    label="Select LLM Backend",
+                    info="OpenAI/Gemini require API Keys. Local runs on ZeroGPU (slower cold start)."
                 )
             
             chatbot = gr.ChatInterface(
                 fn=chat_fn, 
                 additional_inputs=[backend_radio],
-                title="Ask me anything about your documents"
+                title="Chat with your Documents",
+                description="Ask questions about the content you indexed in the 'Knowledge Base' tab.",
+                examples=["Who is the greatest quarterback?", "Summary of Lionel Messi"]
             )
-            
-        with gr.Tab("Admin"):
-            gr.Markdown("## Document Management")
-            file_upload = gr.File(label="Upload Documents (PDF, HTML, TXT)", file_count="multiple")
-            ingest_btn = gr.Button("Ingest & Re-Index")
-            status_box = gr.Textbox(label="Status", interactive=False)
-            
-            ingest_btn.click(admin_ingest, inputs=[file_upload], outputs=[status_box])
 
 if __name__ == "__main__":
     # specific server_name needed for Docker/Spaces
