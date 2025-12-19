@@ -193,7 +193,7 @@ with gr.Blocks(title="RAG Knowledge Assistant", theme=gr.themes.Soft()) as demo:
                     label="Active Brain",
                     container=False
                 )
-                gr.Markdown("*Local = ZeroGPU*", props={"style": "font-size: 10px; color: #888; margin-top: 5px;"})
+                gr.HTML("<div style='font-size: 10px; color: #888; margin-top: 5px;'>*Local = ZeroGPU</div>")
 
         # Right Column: Main App (Chat)
         with gr.Column(scale=4):
