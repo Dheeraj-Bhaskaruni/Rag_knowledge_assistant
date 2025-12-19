@@ -150,18 +150,18 @@ with gr.Blocks(title="RAG Knowledge Assistant", theme=gr.themes.Soft()) as demo:
             gr.Markdown("### 1. Teach Me 🍎")
             gr.Markdown("Upload docs to build your brain.")
             
-            with gr.Tabs():
-                with gr.Tab("Upload"):
-                    file_upload = gr.File(
-                        label="Files (PDF/TXT)", 
-                        file_count="multiple",
-                        file_types=[".pdf", ".txt", ".html"]
-                    )
-                with gr.Tab("Sample"):
-                    use_sample_chk = gr.Checkbox(
-                        label="Load 'Sports Legends'", 
-                        info="Demo Data (Messi, Brady...)"
-                    )
+            file_upload = gr.File(
+                label="Upload Files (PDF/TXT)", 
+                file_count="multiple",
+                file_types=[".pdf", ".txt", ".html"]
+            )
+            
+            gr.Markdown("**OR**", props={"style": "text-align: center; margin: 10px 0; color: #888;"})
+            
+            use_sample_chk = gr.Checkbox(
+                label="Load 'Sports Legends' (Demo)", 
+                info="Use built-in data about Messi, Brady, etc."
+            )
             
             ingest_btn = gr.Button("🚀 Ingest", variant="primary")
             status_box = gr.Textbox(label="Status", value="Ready.", interactive=False, lines=4, max_lines=4)
